@@ -7,6 +7,7 @@ import pygame as pg
 WIDTH = 1600  # ゲームウィンドウの幅
 HEIGHT = 900  # ゲームウィンドウの高さ
 NUM_OF_BOMBS = 5
+FRAME_TATE = 50
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -113,6 +114,23 @@ class Bomb:
         self.rct.move_ip(self.vx, self.vy)
         screen.blit(self.img, self.rct)
 
+class Explosion:
+    def __init__(self,position:Bomb) -> None:
+        self.animetion = []
+        self.animetion.append(pg.transform.rotozoom(pg.image.load(f"fig/explosion.gif"),0,2.0))
+        self.animetion.append(pg.transform.flip(self.animetion[0], True, True))
+        self.rct: pg.Rect = self.animetion[0].get_rect()
+        self.rct.x = position.rct.x
+        self.rct.y = position.rct.y
+        self.life = 3 * FRAME_TATE
+
+    def update(self, screen: pg.Surface):
+        if (self.life%FRAME_TATE) > FRAME_TATE/2:
+            screen.blit(self.animetion[0],self.rct)
+        else:
+            screen.blit(self.animetion[1],self.rct)
+        self.life -= 1
+
 class Beam:
     ''''''
     def __init__(self,bird:Bird) -> None:
@@ -135,6 +153,7 @@ def main():
     bird = Bird((900, 400))
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
     beams = []
+    explosions = []
     clock = pg.time.Clock()
     tmr = 0
     while True:
@@ -167,14 +186,18 @@ def main():
             for j,beam in enumerate(beams):
                 if beam is not None:
                     if beam.rct.colliderect(bomb.rct):
+                        explosions.append(Explosion(bomb))
                         beams[j] = None
                         bombs[i] = None
                         bird.change_img(6,screen)
                         pg.display.update()
         bombs = [bomb for bomb in bombs if bomb is not None]
         beams = [beam for beam in beams if beam is not None]
+        explosions = [explosion for explosion in explosions if explosion.life > 0]
 
         key_lst = pg.key.get_pressed()
+        for explosion in explosions:
+            explosion.update(screen)
         bird.update(key_lst, screen)
         for bomb in bombs:
             bomb.update(screen)
@@ -182,7 +205,7 @@ def main():
             beam.update(screen)
         pg.display.update()
         tmr += 1
-        clock.tick(50)
+        clock.tick(FRAME_TATE)
 
 if __name__ == "__main__":
     pg.init()
