@@ -1,8 +1,9 @@
 import os
-import random
 import sys
-import time
 import pygame as pg
+import time
+import random
+import math
 
 WIDTH = 1600  # ゲームウィンドウの幅
 HEIGHT = 900  # ゲームウィンドウの高さ
@@ -65,6 +66,7 @@ class Bird:
         self.img = __class__.imgs[(+5, 0)]
         self.rct: pg.Rect = self.img.get_rect()
         self.rct.center = xy
+        self.dire=(+5,0)
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -91,6 +93,7 @@ class Bird:
             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.img = __class__.imgs[tuple(sum_mv)]
+            self.dire = sum_mv
         screen.blit(self.img, self.rct)
 
 class Bomb:
@@ -143,11 +146,11 @@ class Explosion:
 class Beam:
     ''''''
     def __init__(self,bird:Bird) -> None:
-        self.img = pg.transform.rotozoom(pg.image.load(f"fig/beam.png"),0,2.0)
+        self.vx,self.vy = bird.dire
+        self.img = pg.transform.rotozoom(pg.image.load(f"fig/beam.png"),math.degrees(math.atan2(-self.vy,self.vx)),2.0)
         self.rct: pg.Rect = self.img.get_rect()
-        self.rct.left = bird.rct.right
-        self.rct.centery = bird.rct.centery
-        self.vx,self.vy = +5,0
+        self.rct.x = bird.rct.x + (bird.rct.bottom- bird.rct.top) * self.vx / 5
+        self.rct.y = bird.rct.y + (bird.rct.right- bird.rct.left) * self.vy / 5
 
     def update(self, screen: pg.Surface):
         if check_bound(self.rct) == (True, True):
