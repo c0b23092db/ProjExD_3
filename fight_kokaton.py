@@ -24,6 +24,15 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
         tate = False
     return yoko, tate
 
+class Score:
+    def __init__(self) -> None:
+        self.score = 0
+        self.font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)
+        self.font.render("", True, (0,0,255))
+        self.text = self.font.render(f"{self.score}",True,(0,0,255))
+    def update(self, screen: pg.Surface):
+        self.text = self.font.render(f"{self.score}",True,(0,0,255))
+        screen.blit(self.text, [100,HEIGHT-50])
 
 class Bird:
     """
@@ -150,6 +159,7 @@ def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
     bg_img = pg.image.load("fig/pg_bg.jpg")
+    score = Score()
     bird = Bird((900, 400))
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
     beams = []
@@ -163,7 +173,6 @@ def main():
             elif event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
                     beams.append(Beam(bird))
-        screen.blit(bg_img, [0,0])
         
         for bomb in bombs:
             if bird.rct.colliderect(bomb.rct):
@@ -181,14 +190,14 @@ def main():
                 beams[i] = None
             if beam.rct.top < 0 or HEIGHT < beam.rct.bottom :
                 beams[i] = None
-        
         for i,bomb in enumerate(bombs):
             for j,beam in enumerate(beams):
                 if beam is not None:
                     if beam.rct.colliderect(bomb.rct):
                         explosions.append(Explosion(bomb))
                         beams[j] = None
-                        bombs[i] = None
+                        bombs[i] = None   
+                        score.score += 1
                         bird.change_img(6,screen)
                         pg.display.update()
         bombs = [bomb for bomb in bombs if bomb is not None]
@@ -196,6 +205,7 @@ def main():
         explosions = [explosion for explosion in explosions if explosion.life > 0]
 
         key_lst = pg.key.get_pressed()
+        screen.blit(bg_img, [0,0])
         for explosion in explosions:
             explosion.update(screen)
         bird.update(key_lst, screen)
@@ -203,6 +213,7 @@ def main():
             bomb.update(screen)
         for beam in beams:
             beam.update(screen)
+        score.update(screen)
         pg.display.update()
         tmr += 1
         clock.tick(FRAME_TATE)
